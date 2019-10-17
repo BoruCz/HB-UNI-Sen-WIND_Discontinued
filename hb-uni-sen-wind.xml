@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<device version="2" rx_modes="CONFIG,WAKEUP,LAZY_CONFIG" cyclic_timeout="14800">
+  <supported_types>
+    <type name="HB-UNI-Sen-WIND" id="HB-UNI-Sen-WIND">
+      <parameter index="10.0" size="2.0" const_value="0xF1D2" />
+    </type>
+  </supported_types>
+  <paramset type="MASTER" id="hm_uni_sen_dev_master">
+    <parameter id="TRANSMIT_INTERVAL">
+      <logical type="integer" min="10" max="3600" default="60" unit="s" />
+      <physical type="integer" interface="config" list="0" index="32" size="2" />
+    </parameter>
+    <parameter id="TRANSMIT_DEV_TRY_MAX">
+      <logical type="integer" min="1.0" max="10.0" default="6.0"/>
+      <physical type="integer" interface="config" list="0" index="20" size="1"/>
+    </parameter>
+  </paramset>
+  <channels>
+    <channel index="0" type="MAINTENANCE" ui_flags="internal" class="maintenance" count="1">
+      <paramset type="MASTER" id="maint_ch_master" />
+      <paramset type="VALUES" id="maint_ch_values">
+        <parameter id="UNREACH" operations="read,event" ui_flags="service">
+          <logical type="boolean" />
+          <physical type="integer" interface="internal" value_id="UNREACH" />
+        </parameter>
+        <parameter id="STICKY_UNREACH" operations="read,write,event" ui_flags="service,sticky">
+          <logical type="boolean" />
+          <physical type="integer" interface="internal" value_id="STICKY_UNREACH" />
+        </parameter>
+        <parameter id="CONFIG_PENDING" operations="read,event" ui_flags="service">
+          <logical type="boolean" />
+          <physical type="integer" interface="internal" value_id="CONFIG_PENDING" />
+        </parameter>
+        <parameter id="RSSI_DEVICE" operations="read,event">
+          <logical type="integer" />
+          <physical type="integer" interface="internal" value_id="RSSI_DEVICE" />
+        </parameter>
+        <parameter id="RSSI_PEER" operations="read,event">
+          <logical type="integer" />
+          <physical type="integer" interface="internal" value_id="RSSI_PEER" />
+        </parameter>
+        <parameter id="DEVICE_IN_BOOTLOADER" operations="read,event" ui_flags="service">
+          <logical type="boolean" />
+          <physical type="integer" interface="internal" value_id="DEVICE_IN_BOOTLOADER" />
+        </parameter>
+        <parameter id="UPDATE_PENDING" operations="read,event" ui_flags="service">
+          <logical type="boolean" />
+          <physical type="integer" interface="internal" value_id="UPDATE_PENDING" />
+        </parameter>
+		<parameter id="LOWBAT" operations="read,event" ui_flags="service">
+         <logical type="boolean"/>
+         <physical type="integer" interface="internal" value_id="LOWBAT"/>
+       </parameter>
+      </paramset>
+    </channel>
+    <channel index="1" type="WEATHER" autoregister="true">
+      <link_roles>
+        <source name="WEATHER_CS" />
+      </link_roles>
+     <paramset type="MASTER" id="HB-UNI-Sen-WIND_master">
+       <parameter id="ANEMOMETER_RADIUS">
+         <logical type="float" min="0" max="25.5" unit="cm" default="6.5" />              
+           <physical type="integer" interface="config" list="1" index="1.0" size="1" />
+           <conversion type="float_integer_scale" factor="10.0" />
+          </parameter>                                                            
+          <parameter id="ANEMOMETER_CALIBRATION_FACTOR">
+           <logical type="float" min="0" max="1000.0" unit="" default="1.0" /> 
+           <physical type="integer" interface="config" list="1" index="2.0" size="2" />
+           <conversion type="float_integer_scale" factor="10.0" />
+         </parameter>        
+         <parameter id="GUST_THRESHOLD_EXTRA_MESSAGE">
+           <logical type="integer" min="0" max="255" unit="km/h" default="0" /> 
+           <physical type="integer" interface="config" list="1" index="6.0" size="1" />
+         </parameter>   
+      </paramset>
+      <paramset type="VALUES" id="HB-UNI-Sen-WIND_values">
+        <parameter id="WIND_SPEED" operations="read,event">
+          <logical type="float" min="0.0" max="1638.3" unit="km/h"/>
+          <physical type="integer" interface="command" value_id="WIND_SPEED" no_init="true">
+            <event frame="WEATHER_EVENT"/>
+          </physical>
+          <conversion type="float_integer_scale" factor="10.0"/>
+        </parameter>
+        <parameter id="WIND_DIRECTION" operations="read,event">
+          <logical type="integer" min="0" max="355" unit="degree"/>
+          <physical type="integer" interface="command" value_id="WIND_DIRECTION" no_init="true">
+            <event frame="WEATHER_EVENT"/>
+          </physical>
+          <conversion type="integer_integer_scale" div="3"/>
+        </parameter>
+        <parameter id="WIND_DIRECTION_RANGE" operations="read,event">
+          <logical type="integer" min="0" max="67" unit="degree"/>
+          <physical type="integer" interface="command" value_id="WIND_DIRECTION_RANGE" no_init="true">
+            <event frame="WEATHER_EVENT"/>
+          </physical>
+          <conversion type="integer_integer_scale" div="45" mul="2"/>
+        </parameter>  
+        <parameter id="GUST_SPEED" operations="read,event">
+          <logical type="float" min="0.0" max="3276.7" unit="km/h"/>
+          <physical type="integer" interface="command" value_id="GUST_SPEED" no_init="true">
+            <event frame="WEATHER_EVENT"/>
+            <event frame="EXTRA_EVENT" auth_violate_policy="reject"/>
+          </physical>
+          <conversion type="float_integer_scale" factor="10.0"/>
+        </parameter>
+		<parameter id="OPERATING_VOLTAGE" operations="read,event" control="NONE">
+         <logical type="float" min="0.0" max="25.5" unit=" V"/>
+         <physical type="integer" interface="command" value_id="OPERATING_VOLTAGE">
+            <event frame="WEATHER_EVENT"/>
+         </physical>
+         <conversion type="float_integer_scale" factor="10"/>
+        </parameter>
+      </paramset>  
+      <paramset type="LINK" id="wds100_ch_link">
+        <parameter id="PEER_NEEDS_BURST">
+          <logical type="boolean" default="false"/>
+          <physical type="integer" interface="config" list="4" index="1.0" size="0.1"/>
+        </parameter>
+        <parameter id="STORM_UPPER_THRESHOLD">
+          <logical type="integer" min="0" max="0xc8"/>
+          <physical type="integer" interface="config" list="1" index="7.0" size="1.0"/>
+        </parameter>
+        <parameter id="STORM_LOWER_THRESHOLD">
+          <logical type="integer" min="0" max="0xc8"/>
+          <physical type="integer" interface="config" list="1" index="8.0" size="1.0"/>
+        </parameter>
+        <parameter id="EXPECT_AES">
+          <logical type="boolean" default="false"/>
+          <physical type="integer" interface="config" list="4" index="1.7" size="0.1"/>
+        </parameter>
+        <enforce id="EXPECT_AES" value="$PEER.AES"/>
+      </paramset>
+      <enforce_link>
+        <value id="SHORT_CT_RAMPOFF" value="0"/>
+        <value id="SHORT_CT_RAMPON" value="0"/>
+        <value id="SHORT_CT_OFFDELAY" value="1"/>
+        <value id="SHORT_CT_ONDELAY" value="1"/>
+        <value id="SHORT_CT_OFF" value="1"/>
+        <value id="SHORT_CT_ON" value="1"/>
+        <value id="SHORT_COND_VALUE_LO" value="0x05"/>
+        <value id="SHORT_COND_VALUE_HI" value="0x19"/>
+        <value id="SHORT_ONDELAY_TIME" value="0x00"/>
+        <value id="SHORT_ON_TIME" value="0xff"/>
+        <value id="SHORT_OFFDELAY_TIME" value="0x00"/>
+        <value id="SHORT_OFF_TIME" value="0xff"/>
+        <value id="SHORT_ON_TIME_MODE" value="0x00"/>
+        <value id="SHORT_OFF_TIME_MODE" value="0x00"/>
+        <value id="SHORT_ACTION_TYPE" value="0x01"/>
+        <value id="SHORT_JT_OFF" value="0x01"/>
+        <value id="SHORT_JT_ON" value="0x02"/>
+        <value id="SHORT_JT_OFFDELAY" value="0x02"/>
+        <value id="SHORT_JT_ONDELAY" value="0x02"/>
+        <value id="LONG_ACTION_TYPE" value="0"/>
+        <value id="LONG_CT_RAMPOFF" value="0"/>
+        <value id="LONG_CT_RAMPON" value="2"/>
+        <value id="LONG_CT_OFFDELAY" value="0"/>
+        <value id="LONG_CT_ONDELAY" value="2"/>
+        <value id="LONG_CT_OFF" value="0"/>
+        <value id="LONG_CT_ON" value="2"/>
+        <value id="LONG_COND_VALUE_LO" value="50"/>
+        <value id="LONG_COND_VALUE_HI" value="180"/>
+        <value id="LONG_ACTION_TYPE" value="1"/>
+        <value id="LONG_JT_OFF" value="1"/>
+        <value id="LONG_JT_ON" value="3"/>
+        <value id="LONG_JT_OFFDELAY" value="3"/>
+        <value id="LONG_JT_ONDELAY" value="1"/>
+        <value id="LONG_JT_RAMPOFF" value="3"/>
+        <value id="LONG_JT_RAMPON" value="3"/>
+      </enforce_link>
+    </channel>
+  </channels>
+  <frames>
+    <frame id="WEATHER_EVENT" direction="from_device" event="true" channel_field="10" type="0x70">
+	  <parameter type="integer" index="11.0" size="2.0" param="WIND_SPEED"/>
+	  <parameter type="integer" index="13.0" size="1.0" param="WIND_DIRECTION"/>
+	  <parameter type="integer" index="14.0" size="1.0" param="WIND_DIRECTION_RANGE"/>
+	  <parameter type="integer" index="15.0" size="2.0" param="GUST_SPEED"/>
+	  <parameter type="integer" index="17.0" size="1.0" param="OPERATING_VOLTAGE" />
+    </frame>
+    <frame id="EXTRA_EVENT" direction="from_device" allowed_receivers="BROADCAST,CENTRAL,OTHER" event="true" type="0x53" channel_field="9:0.6">  
+      <parameter type="integer" index="11.0" size="2.0" param="GUST_SPEED"/>                                                                     
+    </frame> 
+  </frames>
+  <paramset_defs></paramset_defs>
+</device>
