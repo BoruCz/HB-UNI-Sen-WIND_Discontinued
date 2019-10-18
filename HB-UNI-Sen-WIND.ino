@@ -374,6 +374,10 @@ void setup () {
   sdev.init(hal);
   buttonISR(cfgBtn, CONFIG_BUTTON_PIN);
   sdev.initDone();
+  pinMode(WINDSPEEDCOUNTER_PIN, INPUT_PULLUP);
+  pinMode(WINDDIRECTION_PIN, INPUT_PULLUP);
+
+  if ( digitalPinToInterrupt(WINDSPEEDCOUNTER_PIN) == NOT_AN_INTERRUPT ) enableInterrupt(WINDSPEEDCOUNTER_PIN, windspeedcounterISR, RISING); else attachInterrupt(digitalPinToInterrupt(WINDSPEEDCOUNTER_PIN), windspeedcounterISR, RISING);
 }
 
 void loop() {
