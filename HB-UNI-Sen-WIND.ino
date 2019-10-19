@@ -5,7 +5,7 @@
 //- -----------------------------------------------------------------------------------------------------------------------
 // define this to read the device id, serial and device type from bootloader section
 // #define USE_OTA_BOOTLOADER
-#define NSENSORS // if defined, only fake values are used
+// #define NSENSORS // if defined, only fake values are used
 
 #define EI_NOTEXTERNAL
 #include <EnableInterrupt.h>
@@ -20,7 +20,7 @@
 #define CONFIG_BUTTON_PIN  8
 #define LED_PIN            4
 
-#define WINDSPEEDCOUNTER_PIN                 5     // Anemometer
+#define WINDSPEEDCOUNTER_PIN                 17     // Anemometer
 #define WINDDIRECTION_PIN                    A2    // Pin, to which the wind direction indicator is connected
 //#define WINDDIRECTION_USE_PULSE
 
@@ -29,7 +29,7 @@
 #ifdef WINDDIRECTION_USE_PULSE
 const uint16_t WINDDIRS[] = { 70, 78, 86, 94, 102, 108, 116, 0, 8, 16, 24, 32, 40, 48, 56, 62 };
 #else
-const uint16_t WINDDIRS[] = { 58, 74, 52, 115, 97, 328, 302, 790, 559, 663, 187, 205, 163, 420, 129, 153 };
+const uint16_t WINDDIRS[] = { 497, 173, 205, 39, 42, 33, 74, 53, 115, 97, 327, 301, 790, 560, 665 , 397 };
 #endif
 
 #define WINDSPEED_MEASUREINTERVAL_SECONDS    5     // Messintervall (Sekunden) für Windgeschwindigkeit / Böen
