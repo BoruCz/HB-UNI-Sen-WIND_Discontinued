@@ -7,6 +7,7 @@
 // #define USE_OTA_BOOTLOADER
 // #define NSENSORS // if defined, only fake values are used
 
+#define USE_WOR
 #define EI_NOTEXTERNAL
 #include <EnableInterrupt.h>
 #include <AskSinPP.h>

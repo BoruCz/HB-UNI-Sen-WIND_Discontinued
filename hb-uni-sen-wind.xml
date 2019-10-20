@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
-<device version="2" rx_modes="CONFIG,WAKEUP,LAZY_CONFIG" cyclic_timeout="14800">
+<device version="2" rx_modes="BURST" cyclic_timeout="14800">
   <supported_types>
     <type name="HB-UNI-Sen-WIND" id="HB-UNI-Sen-WIND">
       <parameter index="10.0" size="2.0" const_value="0xF1D2" />
