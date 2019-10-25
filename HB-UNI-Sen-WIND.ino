@@ -8,8 +8,6 @@
 // #define NSENSORS // if defined, only fake values are used
 
 #define USE_WOR
-#define EI_NOTEXTERNAL
-#include <EnableInterrupt.h>
 #include <AskSinPP.h>
 #include <LowPower.h>
 
@@ -21,8 +19,8 @@
 #define CONFIG_BUTTON_PIN  8
 #define LED_PIN            4
 
-#define WINDSPEEDCOUNTER_PIN                 17     // Anemometer
-#define WINDDIRECTION_PIN                    A2    // Pin, to which the wind direction indicator is connected
+#define WINDSPEEDCOUNTER_PIN                 3     // Anemometer, external ISR used due to savePower
+#define WINDDIRECTION_PIN                    A3    // Pin, to which the wind direction indicator is connected
 //#define WINDDIRECTION_USE_PULSE
 
 //                             N                      O                       S                         W
@@ -33,7 +31,7 @@ const uint16_t WINDDIRS[] = { 70, 78, 86, 94, 102, 108, 116, 0, 8, 16, 24, 32, 4
 const uint16_t WINDDIRS[] = { 497, 173, 205, 39, 42, 33, 74, 53, 115, 97, 327, 301, 790, 560, 665 , 397 };
 #endif
 
-#define WINDSPEED_MEASUREINTERVAL_SECONDS    5     // Messintervall (Sekunden) für Windgeschwindigkeit / Böen
+#define WINDSPEED_MEASUREINTERVAL_SECONDS    5     // Measurement interval (seconds) for wind speed / gust
 
 //some static definitions
 #define WINDSPEED_MAX              0x3FFF
@@ -71,8 +69,8 @@ class Hal : public BaseHal {
       BaseHal::init(id);
       // measure battery every 1h
       battery.init(seconds2ticks(60UL * 60), sysclock);
-      battery.low(26);
-      battery.critical(24);
+      battery.low(28);
+      battery.critical(22);
     }
 
     bool runready () {
@@ -190,6 +188,7 @@ class WeatherChannel : public Channel<Hal, SensorList1, EmptyList, List4, PEERS_
         void trigger (__attribute__ ((unused)) AlarmClock& clock)  {
           chan.measure_windspeed();
           tick = (seconds2ticks(WINDSPEED_MEASUREINTERVAL_SECONDS));
+          //DPRINT(F("WINDSPEED_MEASUREINTERVAL_TICK     : ")); DDECLN(tick);
           clock.add(*this);
           chan.short_interval_measure_count++;
         }
@@ -240,7 +239,8 @@ class WeatherChannel : public Channel<Hal, SensorList1, EmptyList, List4, PEERS_
         gustspeed = (kmph > GUSTSPEED_MAX) ? GUSTSPEED_MAX : kmph;
       }
 
-      DPRINT(F("WIND kmph     : ")); DDECLN(kmph);
+      //DPRINT(F("_wind_isr_counter     : ")); DDECLN(_wind_isr_counter);
+      //DPRINT(F("WIND kmph     : ")); DDECLN(kmph);
       
       if (this->getList1().ExtraMessageOnGustThreshold() > 0 && kmph > (this->getList1().ExtraMessageOnGustThreshold() * 10)) {
         sendExtraMessage(EVENT_SRC_GUST);
@@ -378,7 +378,7 @@ void setup () {
   pinMode(WINDSPEEDCOUNTER_PIN, INPUT_PULLUP);
   pinMode(WINDDIRECTION_PIN, INPUT_PULLUP);
 
-  if ( digitalPinToInterrupt(WINDSPEEDCOUNTER_PIN) == NOT_AN_INTERRUPT ) enableInterrupt(WINDSPEEDCOUNTER_PIN, windspeedcounterISR, RISING); else attachInterrupt(digitalPinToInterrupt(WINDSPEEDCOUNTER_PIN), windspeedcounterISR, RISING);
+  attachInterrupt(digitalPinToInterrupt(WINDSPEEDCOUNTER_PIN), windspeedcounterISR, RISING);
 }
 
 void loop() {
