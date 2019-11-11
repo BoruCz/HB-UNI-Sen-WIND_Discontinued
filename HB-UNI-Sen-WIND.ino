@@ -7,10 +7,14 @@
 // #define USE_OTA_BOOTLOADER
 // #define NSENSORS // if defined, only fake values are used
 
+//#define NDEBUG
+#define  EI_NOTEXTERNAL
+#include <EnableInterrupt.h>
 #define USE_WOR
 #include <AskSinPP.h>
 #include <LowPower.h>
 
+#include "PCF8583.h"
 #include <Register.h>
 #include <MultiChannelDevice.h>
 
@@ -19,7 +23,6 @@
 #define CONFIG_BUTTON_PIN  8
 #define LED_PIN            4
 
-#define WINDSPEEDCOUNTER_PIN                 3     // Anemometer, external ISR used due to savePower
 #define WINDDIRECTION_PIN                    A3    // Pin, to which the wind direction indicator is connected
 //#define WINDDIRECTION_USE_PULSE
 
@@ -42,11 +45,8 @@ const uint16_t WINDDIRS[] = { 497, 173, 205, 39, 42, 33, 74, 53, 115, 97, 327, 3
 
 using namespace as;
 
+PCF8583 windcounter(0xA0);
 volatile uint16_t _wind_isr_counter = 0;
-
-void windspeedcounterISR() {
-  _wind_isr_counter++;
-}
 
 enum eventMessageSources {EVENT_SRC_GUST};
 
@@ -120,7 +120,7 @@ class UList0 : public RegList0<UReg0> {
     }
 };
 
-DEFREGISTER(Reg1, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16)
+DEFREGISTER(Reg1, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08)
 class SensorList1 : public RegList1<Reg1> {
   public:
     SensorList1 (uint16_t addr) : RegList1<Reg1>(addr) {}
@@ -188,9 +188,10 @@ class WeatherChannel : public Channel<Hal, SensorList1, EmptyList, List4, PEERS_
         void trigger (__attribute__ ((unused)) AlarmClock& clock)  {
           chan.measure_windspeed();
           tick = (seconds2ticks(WINDSPEED_MEASUREINTERVAL_SECONDS));
-          //DPRINT(F("WINDSPEED_MEASUREINTERVAL_TICK     : ")); DDECLN(tick);
+          DPRINT(F("WINDSPEED_MEASUREINTERVAL_TICK     : ")); DDECLN(tick);
           clock.add(*this);
           chan.short_interval_measure_count++;
+          DPRINT(F("SHORT INTERVAL MEASURE COUNT     : ")); DDECLN(chan.short_interval_measure_count);
         }
     } wind_measure;
 
@@ -214,7 +215,7 @@ class WeatherChannel : public Channel<Hal, SensorList1, EmptyList, List4, PEERS_
         device().broadcastEvent(msg, *this);
       }
       uint16_t updCycle = this->device().getList0().Sendeintervall();
-      tick = seconds2ticks(updCycle);
+      tick = (seconds2ticks(updCycle));
 
       initComplete = true;
       windspeed = 0;
@@ -234,19 +235,20 @@ class WeatherChannel : public Channel<Hal, SensorList1, EmptyList, List4, PEERS_
 #ifdef NSENSORS
       _wind_isr_counter = random(20);
 #endif
+      _wind_isr_counter = windcounter.getCount() / 4;
+      windcounter.setCount(0);
       uint16_t kmph = ((226L * this->getList1().AnemometerRadius() * this->getList1().AnemometerCalibrationFactor() * _wind_isr_counter) / WINDSPEED_MEASUREINTERVAL_SECONDS) / 10000;
       if (kmph > gustspeed) {
         gustspeed = (kmph > GUSTSPEED_MAX) ? GUSTSPEED_MAX : kmph;
       }
 
-      //DPRINT(F("_wind_isr_counter     : ")); DDECLN(_wind_isr_counter);
-      //DPRINT(F("WIND kmph     : ")); DDECLN(kmph);
+      DPRINT(F("WIND PULSE COUNTER     : ")); DDECLN(_wind_isr_counter);
+      DPRINT(F("WIND kmph     : ")); DDECLN(kmph);
       
       if (this->getList1().ExtraMessageOnGustThreshold() > 0 && kmph > (this->getList1().ExtraMessageOnGustThreshold() * 10)) {
         sendExtraMessage(EVENT_SRC_GUST);
       }
-
-      
+     
       //DPRINT(F("UPPER THRESH  : ")); DDECLN(stormUpperThreshold);
       //DPRINT(F("LOWER THRESH  : ")); DDECLN(stormLowerThreshold);
 
@@ -375,10 +377,9 @@ void setup () {
   sdev.init(hal);
   buttonISR(cfgBtn, CONFIG_BUTTON_PIN);
   sdev.initDone();
-  pinMode(WINDSPEEDCOUNTER_PIN, INPUT_PULLUP);
   pinMode(WINDDIRECTION_PIN, INPUT_PULLUP);
-
-  attachInterrupt(digitalPinToInterrupt(WINDSPEEDCOUNTER_PIN), windspeedcounterISR, RISING);
+  windcounter.setMode(MODE_EVENT_COUNTER);
+  windcounter.setCount(0);
 }
 
 void loop() {
